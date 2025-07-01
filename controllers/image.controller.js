@@ -12,7 +12,7 @@ const generate = async (req, res) => {
     const response = await client.images.generate({
       model: "dall-e-3",
       prompt: prompt,
-      n: 4,
+      n: 1,
       size: ratio,
     });
 
