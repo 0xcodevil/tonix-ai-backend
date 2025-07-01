@@ -16,9 +16,7 @@ const TelegramUserSchema = new mongoose.Schema(
 const UserSchema = new mongoose.Schema(
   {
     telegram: { type: TelegramUserSchema, required: true },
-    invitedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    friends: { type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], default: [] },
-    coin: { type: Number, default: 0 },
+    coin: { type: Number, default: 100 },
   },
   {
     timestamps: true,

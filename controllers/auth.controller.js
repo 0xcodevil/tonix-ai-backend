@@ -1,47 +1,51 @@
-const User = require("../models/user.model");
-const JWT = require("../utils/jwt");
+const User = require('../models/user.model');
+const JWT = require('../utils/jwt');
+const { AuthDataValidator } = require('@telegram-auth/server');
 
-const loginUser = async (id, username, firstName, lastName, isPremium, isBot, photoUrl, inviterId) => {
-
-  var user = await User.findOne({ 'telegram.id': id });
-
-  if (user) {
-    user.telegram = { id, username, firstName, lastName, isPremium, isBot, photoUrl };
-    await user.save().then(() => console.log(`${firstName} logged in.`));
-  } else {
-    try {
-      user = new User({ telegram: { id, username, firstName, lastName, isPremium, photoUrl, isBot } });
-      await user.save();
-      console.log(`${firstName} registered.`);
-
-      if (inviterId && inviterId !== id) {
-        const inviter = await User.findOne({ 'telegram.id': inviterId });
-        if (inviter && !inviter.friends.includes(user._id)) {
-          inviter.friends.push(user._id);
-          await inviter.save();
-
-          user.invitedBy = inviter._id;
-          await user.save();
-        }
-      }
-    } catch (err) {
-      console.error(`Sign up failed: ${err.message}`);
-    }
-  }
-}
+const validator = new AuthDataValidator({ botToken: process.env.BOT_TOKEN });
 
 const login = async (req, res) => {
-  const data = req.body;
-  const tokenDuration = 6 * 3600;
+  try {
+    const telegram = await validator.validate(new Map(Object.entries(req.query)));
 
-  await loginUser(data.id, data.username, data.first_name, data.last_name, data.is_premium, data.is_bot, data.photo_url, data.inviterId);
+    var user = await User.findOne({ 'telegram.id': telegram.id });
 
-  const token = JWT.generate({ telegramId: data.id });
-  res.cookie('access_token', token, { httpOnly: true, maxAge: tokenDuration * 1000 }).json({ msg: "OK" });
+    if (user) {
+      user.telegram = {
+        id: telegram.id,
+        username: telegram.username,
+        firstName: telegram.first_name,
+        lastName: telegram.last_name,
+        isPremium: telegram.is_premium,
+        isBot: telegram.is_bot,
+        photoUrl: telegram.photo_url
+      };
+      await user.save().then(() => console.log(`${firstName} logged in.`));
+    } else {
+      user = new User({
+        telegram: {
+          id: telegram.id,
+          username: telegram.username,
+          firstName: telegram.first_name,
+          lastName: telegram.last_name,
+          isPremium: telegram.is_premium,
+          isBot: telegram.is_bot,
+          photoUrl: telegram.photo_url
+        }
+      });
+      await user.save();
+      console.log(`${firstName} registered.`);
+    }
+
+    const token = JWT.generate({ telegramId: telegram.id });
+    res.cookie('access_token', token, { httpOnly: true, maxAge: tokenDuration * 1000 }).redirect('/?login=success');
+  } catch (err) {
+    res.redirect('/?login=failed');
+  }
 };
 
 const logout = async (req, res) => {
   res.clearCookie('access_token').json({ message: "Logged out." });
 };
 
-module.exports = { login, logout, loginUser };
+module.exports = { login, logout };
