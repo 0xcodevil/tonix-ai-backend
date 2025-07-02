@@ -5,6 +5,7 @@ const { AuthDataValidator } = require('@telegram-auth/server');
 const validator = new AuthDataValidator({ botToken: process.env.BOT_TOKEN });
 
 const login = async (req, res) => {
+  console.log(req.query);
   try {
     const telegram = await validator.validate(new Map(Object.entries(req.query)));
 
@@ -20,7 +21,7 @@ const login = async (req, res) => {
         isBot: telegram.is_bot,
         photoUrl: telegram.photo_url
       };
-      await user.save().then(() => console.log(`${firstName} logged in.`));
+      await user.save().then(() => console.log(`${telegram.first_name} logged in.`));
     } else {
       user = new User({
         telegram: {
@@ -34,12 +35,13 @@ const login = async (req, res) => {
         }
       });
       await user.save();
-      console.log(`${firstName} registered.`);
+      console.log(`${telegram.first_name} registered.`);
     }
 
     const token = JWT.generate({ telegramId: telegram.id });
-    res.cookie('access_token', token, { httpOnly: true, maxAge: tokenDuration * 1000 }).redirect('/?login=success');
+    res.cookie('access_token', token, { httpOnly: true }).redirect('/?login=success');
   } catch (err) {
+    console.log(err.message);
     res.redirect('/?login=failed');
   }
 };
