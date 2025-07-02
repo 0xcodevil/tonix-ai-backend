@@ -29,7 +29,7 @@ const generate = async (req, res) => {
 
     return res.json({ images: response.data.map(d => d.url) });
   } catch (err) {
-    return res.json({ msg: err.message });
+    return res.status(500).json({ msg: err.message });
   }
 }
 
