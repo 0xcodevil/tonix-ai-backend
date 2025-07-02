@@ -5,7 +5,6 @@ const { AuthDataValidator } = require('@telegram-auth/server');
 const validator = new AuthDataValidator({ botToken: process.env.BOT_TOKEN });
 
 const login = async (req, res) => {
-  console.log(req.query);
   try {
     const telegram = await validator.validate(new Map(Object.entries(req.query)));
 
