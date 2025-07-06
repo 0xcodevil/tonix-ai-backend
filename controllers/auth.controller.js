@@ -4,44 +4,27 @@ const { AuthDataValidator } = require('@telegram-auth/server');
 
 const validator = new AuthDataValidator({ botToken: process.env.BOT_TOKEN });
 
-const login = async (req, res) => {
+const loginWithTelegram = async (req, res) => {
   try {
-    const telegram = await validator.validate(new Map(Object.entries(req.query)));
+    const telegram = await validator.validate(new Map(Object.entries(req.body)));
 
-    var user = await User.findOne({ 'telegram.id': telegram.id });
+    var user = await User.findOne({ 'telegramId': telegram.id });
 
-    if (user) {
-      user.telegram = {
-        id: telegram.id,
-        username: telegram.username,
+    if (!user) {
+      user = new User({
+        telegramId: telegram.id,
         firstName: telegram.first_name,
         lastName: telegram.last_name,
-        isPremium: telegram.is_premium,
-        isBot: telegram.is_bot,
-        photoUrl: telegram.photo_url
-      };
-      await user.save().then(() => console.log(`${telegram.first_name} logged in.`));
-    } else {
-      user = new User({
-        telegram: {
-          id: telegram.id,
-          username: telegram.username,
-          firstName: telegram.first_name,
-          lastName: telegram.last_name,
-          isPremium: telegram.is_premium,
-          isBot: telegram.is_bot,
-          photoUrl: telegram.photo_url
-        }
+        avatar: telegram.photo_url,
       });
       await user.save();
-      console.log(`${telegram.first_name} registered.`);
     }
 
-    const token = JWT.generate({ telegramId: telegram.id });
-    res.cookie('access_token', token, { httpOnly: true }).redirect('/?login=success');
+    const token = JWT.generate({ id: user._id });
+    res.cookie('access_token', token, { httpOnly: true }).json({ success: true });
   } catch (err) {
     console.log(err.message);
-    res.redirect('/?login=failed');
+    res.status(500).json({ message: err.message });
   }
 };
 
@@ -49,4 +32,4 @@ const logout = async (req, res) => {
   res.clearCookie('access_token').json({ message: "Logged out." });
 };
 
-module.exports = { login, logout };
+module.exports = { loginWithTelegram, logout };

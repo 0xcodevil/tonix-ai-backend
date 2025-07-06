@@ -2,9 +2,11 @@ const express = require('express');
 const router = express.Router();
 
 const { 
-  login,
+  loginWithGoogle,
+  loginWithTelegram,
 } = require('../controllers/auth.controller');
 
-router.all('/login', login);
+router.post('/google', loginWithGoogle);
+router.post('/telegram', loginWithTelegram);
 
 module.exports = router;
