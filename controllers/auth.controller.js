@@ -54,7 +54,6 @@ const loginWithTelegram = async (req, res) => {
     const token = JWT.generate({ id: user._id });
     res.cookie('access_token', token, { httpOnly: true }).json({ success: true });
   } catch (err) {
-    console.log(err.message);
     res.status(500).json({ message: err.message });
   }
 };
