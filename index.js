@@ -14,6 +14,7 @@ Server.use(express.urlencoded({ extended: true }));
 Server.use('/api/v1', router);
 
 Server.use(express.static('../client/dist'));
+Server.use('/uploads', express.static('uploads'));
 Server.get('*', (_, res) => {
   res.sendFile('index.html', { root: path.join(__dirname, '../client/dist') });
 });

@@ -1,9 +1,21 @@
 const OpenAI = require('openai');
+const multer = require('multer');
 const Image = require('../models/image.model');
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_SECRET_KEY
 });
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname);
+  }
+});
+
+const upload = multer({ storage });
 
 const generate = async (req, res) => {
   const { prompt, ratio } = req.body;
@@ -20,7 +32,6 @@ const generate = async (req, res) => {
       const image = new Image({
         telegramId: '7716288560',
         prompt: prompt,
-        ratio: ratio,
         image: data.url
       });
 
@@ -33,6 +44,20 @@ const generate = async (req, res) => {
   }
 }
 
+const uploadImage = async (req, res) => {
+
+  const image = new Image({
+    userId: req.user._id,
+    prompt: req.body.prompt,
+    image: '/uploads/' + req.file.filename,
+  });
+
+  await image.save();
+
+  res.json({ url: image.image });
+}
+
 module.exports = {
   generate,
+  upload, uploadImage
 }
