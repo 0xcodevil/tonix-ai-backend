@@ -1,5 +1,7 @@
 const OpenAI = require('openai');
+const { v4: uuid } = require('uuid');
 const multer = require('multer');
+const download = require('download');
 const Image = require('../models/image.model');
 
 const client = new OpenAI({
@@ -11,7 +13,7 @@ const storage = multer.diskStorage({
     cb(null, 'uploads/');
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
+    cb(null, uuid());
   }
 });
 
@@ -28,11 +30,14 @@ const generate = async (req, res) => {
       size: ratio,
     });
 
+    
     for (let data of response.data) {
+      const filename = uuid();
+      await download(data.url).pipe(fs.createWriteStream(`uploads/${filename}.jpg`));
       const image = new Image({
-        telegramId: '7716288560',
+        user: req.user._id,
         prompt: prompt,
-        image: data.url
+        image: `/uploads/${filename}.jpg`,
       });
 
       await image.save();
@@ -40,6 +45,7 @@ const generate = async (req, res) => {
 
     return res.json({ images: response.data.map(d => d.url) });
   } catch (err) {
+    console.error(err);
     return res.status(500).json({ msg: err.message });
   }
 }
