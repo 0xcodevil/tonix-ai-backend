@@ -8,6 +8,6 @@ const imageRouter = require('./image.route');
 
 router.use('/auth', authRouter);
 router.use('/user', authenticate, userRouter);
-router.use('/image', authenticate, imageRouter);
+router.use('/image', imageRouter);
 
 module.exports = router;

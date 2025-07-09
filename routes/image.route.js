@@ -1,12 +1,15 @@
 const express = require('express');
 const router = express.Router();
+const authenticate = require('../middleware/authenticate');
 
 const {
+  getImages,
   generate,
-  upload, uploadImage
+  upload, uploadImage,
 } = require('../controllers/image.controller');
 
-router.post('/generate', generate);
-router.post('/upload', upload.single('file'), uploadImage);
+router.get('/list', getImages);
+router.post('/generate', authenticate, generate);
+router.post('/upload', authenticate, upload.single('file'), uploadImage);
 
 module.exports = router;

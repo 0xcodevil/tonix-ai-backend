@@ -47,7 +47,7 @@ const generate = async (req, res) => {
 const uploadImage = async (req, res) => {
 
   const image = new Image({
-    userId: req.user._id,
+    user: req.user._id,
     prompt: req.body.prompt,
     image: '/uploads/' + req.file.filename,
   });
@@ -57,7 +57,21 @@ const uploadImage = async (req, res) => {
   res.json({ url: image.image });
 }
 
+const getImages = async (req, res) => {
+  const images = await Image.find().limit(4).sort({ createdAt: -1 }).populate('user');
+  const result = images.map(image => ({
+    url: image.image,
+    prompt: image.prompt,
+    avatar: image.user.avatar,
+    firstName: image.user.firstName,
+    lastName: image.user.lastName,
+  }));
+
+  return res.json(result);
+}
+
 module.exports = {
   generate,
+  getImages,
   upload, uploadImage
 }
