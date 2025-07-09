@@ -1,3 +1,4 @@
+const fs = require('fs');
 const OpenAI = require('openai');
 const { v4: uuid } = require('uuid');
 const multer = require('multer');
@@ -13,7 +14,7 @@ const storage = multer.diskStorage({
     cb(null, 'uploads/');
   },
   filename: (req, file, cb) => {
-    cb(null, uuid());
+    cb(null, uuid() + '.jpeg');
   }
 });
 
@@ -30,7 +31,6 @@ const generate = async (req, res) => {
       size: ratio,
     });
 
-    
     for (let data of response.data) {
       const filename = uuid();
       await download(data.url).pipe(fs.createWriteStream(`uploads/${filename}.jpg`));
@@ -42,6 +42,50 @@ const generate = async (req, res) => {
 
       await image.save();
     }
+
+    return res.json({ images: response.data.map(d => d.url) });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ msg: err.message });
+  }
+}
+
+const editImages = async (req, res) => {
+  const { prompt, ratio } = req.body;
+
+  const imageFiles = req.files.map(file => 'uploads/' + file.filename);
+  console.log(imageFiles);
+
+  const images = await Promise.all(
+    imageFiles.map(async (file) =>
+      await OpenAI.toFile(fs.createReadStream(file), null, {
+        type: "image/jpeg",
+      })
+    ),
+  );
+
+  try {
+    const response = await client.images.edit({
+      model: "dall-e-2",
+      image: images,
+      prompt: prompt,
+      size: ratio,
+      response_format: "url"
+    });
+
+    console.log(response);
+
+    // for (let data of response.data) {
+    //   const filename = uuid();
+    //   await download(data.url).pipe(fs.createWriteStream(`uploads/${filename}.jpg`));
+    //   const image = new Image({
+    //     user: req.user._id,
+    //     prompt: prompt,
+    //     image: `/uploads/${filename}.jpg`,
+    //   });
+
+    //   await image.save();
+    // }
 
     return res.json({ images: response.data.map(d => d.url) });
   } catch (err) {
@@ -79,5 +123,6 @@ const getImages = async (req, res) => {
 module.exports = {
   generate,
   getImages,
+  editImages,
   upload, uploadImage
 }
