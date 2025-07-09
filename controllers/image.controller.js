@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 const OpenAI = require('openai');
 const { v4: uuid } = require('uuid');
 const multer = require('multer');
@@ -14,7 +15,8 @@ const storage = multer.diskStorage({
     cb(null, 'uploads/');
   },
   filename: (req, file, cb) => {
-    cb(null, uuid() + '.jpeg');
+    const ext = path.extname(file.originalname);
+    cb(null, uuid() + '.' + ext);
   }
 });
 
@@ -53,39 +55,32 @@ const generate = async (req, res) => {
 const editImages = async (req, res) => {
   const { prompt, ratio } = req.body;
 
-  const imageFiles = req.files.map(file => 'uploads/' + file.filename);
-  console.log(imageFiles);
+  const imageFile = 'uploads/' + req.file.filename;
 
-  const images = await Promise.all(
-    imageFiles.map(async (file) =>
-      await OpenAI.toFile(fs.createReadStream(file), null, {
-        type: "image/jpeg",
-      })
-    ),
-  );
+  const image = await OpenAI.toFile(fs.createReadStream(imageFile), null, {
+    type: "image/png",
+  });
 
   try {
     const response = await client.images.edit({
       model: "dall-e-2",
-      image: images,
+      image: image,
       prompt: prompt,
       size: ratio,
       response_format: "url"
     });
 
-    console.log(response);
+    for (let data of response.data) {
+      const filename = uuid();
+      await download(data.url).pipe(fs.createWriteStream(`uploads/${filename}.jpg`));
+      const image = new Image({
+        user: req.user._id,
+        prompt: prompt,
+        image: `/uploads/${filename}.jpg`,
+      });
 
-    // for (let data of response.data) {
-    //   const filename = uuid();
-    //   await download(data.url).pipe(fs.createWriteStream(`uploads/${filename}.jpg`));
-    //   const image = new Image({
-    //     user: req.user._id,
-    //     prompt: prompt,
-    //     image: `/uploads/${filename}.jpg`,
-    //   });
-
-    //   await image.save();
-    // }
+      await image.save();
+    }
 
     return res.json({ images: response.data.map(d => d.url) });
   } catch (err) {

@@ -12,6 +12,6 @@ const {
 router.get('/list', getImages);
 router.post('/generate', authenticate, generate);
 router.post('/upload', authenticate, upload.single('image'), uploadImage);
-router.post('/edit', authenticate, upload.array('images'), editImages);
+router.post('/edit', authenticate, upload.single('image'), editImages);
 
 module.exports = router;
