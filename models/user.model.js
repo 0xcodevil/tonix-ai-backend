@@ -7,6 +7,7 @@ const UserSchema = new mongoose.Schema(
     avatar: { type: String, default: '' },
     telegramId: { type: String },
     email: { type: String },
+    isAdmin: { type: Boolean, default: false },
     coin: { type: Number, default: 100 },
   },
   {

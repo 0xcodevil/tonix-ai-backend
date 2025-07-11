@@ -105,6 +105,7 @@ const uploadImage = async (req, res) => {
 const getImages = async (req, res) => {
   const images = await Image.find().limit(4).sort({ createdAt: -1 }).populate('user');
   const result = images.map(image => ({
+    id: image._id,
     url: image.image,
     prompt: image.prompt,
     avatar: image.user.avatar,
@@ -115,9 +116,18 @@ const getImages = async (req, res) => {
   return res.json(result);
 }
 
+const deleteImage = async (req, res) => {
+  if (!req.user.isAdmin) return res.status(400).json({ msg: 'You\'re not admin' });
+
+  await Image.findByIdAndDelete(req.body.id);
+
+  res.json({ success: true });
+}
+
 module.exports = {
   generate,
   getImages,
   editImages,
+  deleteImage,
   upload, uploadImage
 }
