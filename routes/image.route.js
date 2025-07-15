@@ -7,12 +7,14 @@ const {
   generate,
   editImages,
   deleteImage,
+  publishImage,
   upload, uploadImage,
 } = require('../controllers/image.controller');
 
 router.get('/list', getImages);
 router.post('/generate', authenticate, generate);
 router.post('/delete', authenticate, deleteImage);
+router.post('/delete', authenticate, publishImage);
 router.post('/upload', authenticate, upload.single('image'), uploadImage);
 router.post('/edit', authenticate, upload.single('image'), editImages);
 

@@ -24,7 +24,6 @@ const upload = multer({ storage });
 
 const generate = async (req, res) => {
   const { prompt, ratio } = req.body;
-
   try {
     const response = await client.images.generate({
       model: "dall-e-3",
@@ -33,6 +32,7 @@ const generate = async (req, res) => {
       size: ratio,
     });
 
+    const images = [];
     for (let data of response.data) {
       const filename = uuid();
       await download(data.url).pipe(fs.createWriteStream(`uploads/${filename}.jpg`));
@@ -43,9 +43,16 @@ const generate = async (req, res) => {
       });
 
       await image.save();
+      images.push(image);
     }
 
-    return res.json({ images: response.data.map(d => d.url) });
+    return res.json({
+      images: images.map(d => ({
+        id: image._id,
+        prompt: prompt,
+        url: image.image
+      }))
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ msg: err.message });
@@ -70,6 +77,7 @@ const editImages = async (req, res) => {
       response_format: "url"
     });
 
+    const images = [];
     for (let data of response.data) {
       const filename = uuid();
       await download(data.url).pipe(fs.createWriteStream(`uploads/${filename}.jpg`));
@@ -80,9 +88,16 @@ const editImages = async (req, res) => {
       });
 
       await image.save();
+      images.push(image);
     }
 
-    return res.json({ images: response.data.map(d => d.url) });
+    return res.json({
+      images: images.map(d => ({
+        id: image._id,
+        prompt: prompt,
+        url: image.image
+      }))
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ msg: err.message });
@@ -102,8 +117,21 @@ const uploadImage = async (req, res) => {
   res.json({ url: image.image });
 }
 
+const publishImage = async (req, res) => {
+  const { id, isPublic } = req.body;
+  const image = await Image.findById(id);
+  if (image.user.equals(req.user._id)) {
+    image.isPublic = isPublic;
+    await image.save();
+
+    return res.json({ success: true });
+  } else {
+    return res.status(400).json({ msg: 'You don\'t have permission of this image' });
+  }
+}
+
 const getImages = async (req, res) => {
-  const images = await Image.find().limit(4).sort({ createdAt: -1 }).populate('user');
+  const images = await Image.find({ isPublic: true }).limit(4).sort({ createdAt: -1 }).populate('user');
   const result = images.map(image => ({
     id: image._id,
     url: image.image,
@@ -129,5 +157,6 @@ module.exports = {
   getImages,
   editImages,
   deleteImage,
+  publishImage,
   upload, uploadImage
 }
