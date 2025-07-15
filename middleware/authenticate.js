@@ -13,7 +13,7 @@ module.exports = async (req, res, next) => {
     return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'Invalid token.' });
   }
 
-  const user = await User.findOne({ 'telegram.id': result.payload.telegramId });
+  const user = await User.findById(result.payload.id);
   if (!user) {
     return res.status(StatusCodes.UNAUTHORIZED).json({ message: 'User not found.'});
   }
