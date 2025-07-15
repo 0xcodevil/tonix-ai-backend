@@ -120,13 +120,14 @@ const uploadImage = async (req, res) => {
 const publishImage = async (req, res) => {
   const { id, isPublic } = req.body;
   const image = await Image.findById(id);
+  if (!image) return res.status(400).json({ msg: 'Image not found.' });
   if (image.user.equals(req.user._id)) {
     image.isPublic = isPublic;
     await image.save();
 
     return res.json({ success: true });
   } else {
-    return res.status(400).json({ msg: 'You don\'t have permission of this image' });
+    return res.status(400).json({ msg: 'You don\'t have permission of this image.' });
   }
 }
 
