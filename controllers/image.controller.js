@@ -47,7 +47,7 @@ const generate = async (req, res) => {
     }
 
     return res.json({
-      images: images.map(d => ({
+      images: images.map(image => ({
         id: image._id,
         prompt: prompt,
         url: image.image
@@ -92,7 +92,7 @@ const editImages = async (req, res) => {
     }
 
     return res.json({
-      images: images.map(d => ({
+      images: images.map(image => ({
         id: image._id,
         prompt: prompt,
         url: image.image
