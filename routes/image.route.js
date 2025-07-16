@@ -4,6 +4,7 @@ const authenticate = require('../middleware/authenticate');
 
 const {
   getImages,
+  getMyImages,
   generate,
   editImages,
   deleteImage,
@@ -12,6 +13,7 @@ const {
 } = require('../controllers/image.controller');
 
 router.get('/list', getImages);
+router.get('/mine', authenticate, getMyImages);
 router.post('/generate', authenticate, generate);
 router.post('/delete', authenticate, deleteImage);
 router.post('/publish', authenticate, publishImage);

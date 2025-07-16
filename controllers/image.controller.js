@@ -132,7 +132,8 @@ const publishImage = async (req, res) => {
 }
 
 const getImages = async (req, res) => {
-  const images = await Image.find({ isPublic: true }).limit(4).sort({ createdAt: -1 }).populate('user');
+  const { page = 0, pageSize = 4 } = req.query;
+  const images = await Image.find({ isPublic: true }).sort({ createdAt: -1 }).skip(page * pageSize).limit(pageSize).populate('user');
   const result = images.map(image => ({
     id: image._id,
     url: image.image,
@@ -145,17 +146,37 @@ const getImages = async (req, res) => {
   return res.json(result);
 }
 
+const getMyImages = async (req, res) => {
+  const { page = 0, pageSize = 4 } = req.query;
+  const images = await Image.find({ user: req.user._id }).sort({ createdAt: -1 }).skip(page * pageSize).limit(pageSize).populate('user');
+  const result = images.map(image => ({
+    id: image._id,
+    url: image.image,
+    prompt: image.prompt,
+    avatar: image.user.avatar,
+    firstName: image.user.firstName,
+    lastName: image.user.lastName,
+    isPublic: image.isPublic,
+  }));
+
+  return res.json(result);
+}
+
 const deleteImage = async (req, res) => {
-  if (!req.user.isAdmin) return res.status(400).json({ msg: 'You\'re not admin' });
-
-  await Image.findByIdAndDelete(req.body.id);
-
-  res.json({ success: true });
+  const image = await Image.findById(req.body.id);
+  if (!image) return res.status(400).json({ msg: 'Image not found' });
+  if (req.user.isAdmin || req.user._id.equals(image.user)) {
+    await Image.findByIdAndDelete(req.body.id);
+    res.json({ success: true });
+  } else {
+    return res.status(400).json({ msg: 'You\'re not admin' });
+  }
 }
 
 module.exports = {
   generate,
   getImages,
+  getMyImages,
   editImages,
   deleteImage,
   publishImage,
