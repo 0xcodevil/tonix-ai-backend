@@ -4,6 +4,7 @@ const OpenAI = require('openai');
 const { v4: uuid } = require('uuid');
 const multer = require('multer');
 const download = require('download');
+const { IMAGE_LIMIT_PER_DAY } = require('../config');
 const Image = require('../models/image.model');
 
 const client = new OpenAI({
@@ -22,7 +23,46 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+const getStatus = async (req, res) => {
+  const now = new Date();
+
+  const startOfToday = now;
+  startOfToday.setHours(0, 0, 0, 0);
+  const endOfToday = now;
+  endOfToday.setHours(23, 59, 59, 999);
+
+  const count = await Image.countDocuments({
+    user: req.user._id,
+    createdAt: {
+      $gte: startOfToday.getTime(),
+      $lte: startOfToday.getTime(),
+    }
+  });
+
+  return res.json({
+    current: Math.max(IMAGE_LIMIT_PER_DAY - count, 0),
+    limit: IMAGE_LIMIT_PER_DAY,
+  });
+}
+
 const generate = async (req, res) => {
+  const now = new Date();
+
+  const startOfToday = now;
+  startOfToday.setHours(0, 0, 0, 0);
+  const endOfToday = now;
+  endOfToday.setHours(23, 59, 59, 999);
+
+  const count = await Image.countDocuments({
+    user: req.user._id,
+    createdAt: {
+      $gte: startOfToday.getTime(),
+      $lte: startOfToday.getTime(),
+    }
+  });
+
+  if (count >= IMAGE_LIMIT_PER_DAY) return res.status(500).json({ msg: 'Image generation limited for today.' });
+
   const { prompt, ratio } = req.body;
   try {
     const response = await client.images.generate({
@@ -60,6 +100,23 @@ const generate = async (req, res) => {
 }
 
 const editImages = async (req, res) => {
+  const now = new Date();
+
+  const startOfToday = now;
+  startOfToday.setHours(0, 0, 0, 0);
+  const endOfToday = now;
+  endOfToday.setHours(23, 59, 59, 999);
+
+  const count = await Image.countDocuments({
+    user: req.user._id,
+    createdAt: {
+      $gte: startOfToday.getTime(),
+      $lte: startOfToday.getTime(),
+    }
+  });
+
+  if (count >= IMAGE_LIMIT_PER_DAY) return res.status(500).json({ msg: 'Image generation limited for today.' });
+  
   const { prompt, ratio } = req.body;
 
   const imageFile = 'uploads/' + req.file.filename;
@@ -174,6 +231,7 @@ const deleteImage = async (req, res) => {
 }
 
 module.exports = {
+  getStatus,
   generate,
   getImages,
   getMyImages,

@@ -3,6 +3,7 @@ const router = express.Router();
 const authenticate = require('../middleware/authenticate');
 
 const {
+  getStatus,
   getImages,
   getMyImages,
   generate,
@@ -12,6 +13,7 @@ const {
   upload, uploadImage,
 } = require('../controllers/image.controller');
 
+router.get('/status', authenticate, getStatus);
 router.get('/list', getImages);
 router.get('/mine', authenticate, getMyImages);
 router.post('/generate', authenticate, generate);
