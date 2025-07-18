@@ -24,18 +24,16 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 const getStatus = async (req, res) => {
-  const now = new Date();
-
-  const startOfToday = now;
+  const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
-  const endOfToday = now;
+  const endOfToday = new Date();
   endOfToday.setHours(23, 59, 59, 999);
 
   const count = await Image.countDocuments({
     user: req.user._id,
     createdAt: {
       $gte: startOfToday.getTime(),
-      $lte: startOfToday.getTime(),
+      $lte: endOfToday.getTime(),
     }
   });
 
@@ -46,18 +44,16 @@ const getStatus = async (req, res) => {
 }
 
 const generate = async (req, res) => {
-  const now = new Date();
-
-  const startOfToday = now;
+  const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
-  const endOfToday = now;
+  const endOfToday = new Date();
   endOfToday.setHours(23, 59, 59, 999);
 
   const count = await Image.countDocuments({
     user: req.user._id,
     createdAt: {
       $gte: startOfToday.getTime(),
-      $lte: startOfToday.getTime(),
+      $lte: endOfToday.getTime(),
     }
   });
 
@@ -100,18 +96,16 @@ const generate = async (req, res) => {
 }
 
 const editImages = async (req, res) => {
-  const now = new Date();
-
-  const startOfToday = now;
+  const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
-  const endOfToday = now;
+  const endOfToday = new Date();
   endOfToday.setHours(23, 59, 59, 999);
 
   const count = await Image.countDocuments({
     user: req.user._id,
     createdAt: {
       $gte: startOfToday.getTime(),
-      $lte: startOfToday.getTime(),
+      $lte: endOfToday.getTime(),
     }
   });
 
